@@ -147,11 +147,8 @@ public class MainActivity extends AppCompatActivity {
 
             parseIDCElement(detectedText.toString());
 
-            if (identityCardInfo.getPrenom().length() < 1 || identityCardInfo.getNom().length() < 1 || identityCardInfo.getNumCarte().length() < 1) {
-                detectedTextView.setText("Take an other picture please.");
-            } else {
                 detectedTextView.setText(identityCardInfo.getNom() + "\n" + identityCardInfo.getPrenom() + "\n" + identityCardInfo.getNumCarte());
-            }
+
         } finally {
             textRecognizer.release();
         }
@@ -213,28 +210,26 @@ public class MainActivity extends AppCompatActivity {
         String nom = "";
         String prenom = "";
         String numCarte = "";
+        String tampon = "";
 
         //On renplace tout les \n par des ; pour moins de problèmes
         allText = allText.replace('\n', ';');
 
         //Puis on split la chaine
         allTextTab = allText.split(";");
-        int tabLength = allTextTab.length;
 
         try {
             //On rentre les infos
-            for (int i = 0; i < allTextTab.length; i++) {
-                System.out.println(allTextTab[i]);
+            for (int i = 0; i < 6; i++) {
                 if (allTextTab[i].contains("Nom")) {
-                    nom = allTextTab[i];
-                    //nom = nom.substring(8, nom.length());
+                    nom = allTextTab[i].substring(7,allTextTab[i].length());
                 }
-                if (allTextTab[i].contains("CARTE") /*|| (isNumber(allTextTab[i]) && allTextTab[i].length() == 22)*/) {
-                    numCarte = allTextTab[i];
+                tampon = numberSuite(allTextTab[i]);
+                if (tampon.length() == 12) {
+                    numCarte = tampon;
                 }
-                if (allTextTab[i].contains("Prenom")) {
-                    prenom = allTextTab[i];
-                    //prenom = prenom.substring(9, prenom.length());
+                if (allTextTab[i].contains("Prénom")) {
+                    prenom = allTextTab[i].substring(10,allTextTab[i].length());
                 }
             }
         } catch (Exception e) {
@@ -246,13 +241,24 @@ public class MainActivity extends AppCompatActivity {
         identityCardInfo.setNumCarte(numCarte);
     }
 
-    private boolean isNumber(String chaine) {
-        boolean isNumber = true;
-        for (int i = 0; i <= chaine.length(); i++) {
-            if (!(chaine.charAt(i) >= '0' && chaine.charAt(i) <= '9')) {
-                isNumber = false;
+    private String numberSuite(@org.jetbrains.annotations.NotNull String chaine) {
+        int numbers = 0;
+        String temp = "";
+        for (int i = 0; i < chaine.length(); i++) {
+            if (numbers != 12) {
+                if (chaine.charAt(i) >= '0' && chaine.charAt(i) <= '9' && numbers < 12 ) {
+                    numbers++;
+                    temp += chaine.charAt(i);
+                } else {
+                    numbers = 0;
+                    temp = "";
+                }
+            }
+            else
+            {
+                break;
             }
         }
-        return isNumber;
+        return temp;
     }
 }
