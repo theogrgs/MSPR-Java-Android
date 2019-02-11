@@ -35,6 +35,6 @@
         android:layout_marginBottom="25dp"
         android:background="#EEEEEE"
         android:scrollbars="vertical"
-        android:text="Take a picture of the white part of the Identity Card" />
+        android:text="Take a picture of the Identity Card." />
 
 </RelativeLayout>
