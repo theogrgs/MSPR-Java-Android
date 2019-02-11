@@ -10,7 +10,6 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -42,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Uri imageUri;
     private TextView detectedTextView;
+    private IDCInformation identityCardInfo = new IDCInformation();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
         detectedTextView.setMovementMethod(new ScrollingMovementMethod());
     }
 
-    @Override
+    /*@Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
             case MY_PERMISSIONS_REQUESTS: {
@@ -86,10 +86,9 @@ public class MainActivity extends AppCompatActivity {
                 // TODO: Take care of this case later
                 break;
         }
-    }
+    }*/
 
-    private void requestPermissions()
-    {
+    private void requestPermissions() {
         List<String> requiredPermissions = new ArrayList<>();
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -146,11 +145,14 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            //String formatDetectedText = parseIDCElement(detectedText.toString());
+            parseIDCElement(detectedText.toString());
 
-            detectedTextView.setText(detectedText);
-        }
-        finally {
+            if (identityCardInfo.getPrenom().length() < 1 || identityCardInfo.getNom().length() < 1 || identityCardInfo.getNumCarte().length() < 1) {
+                detectedTextView.setText("Take an other picture please.");
+            } else {
+                detectedTextView.setText(identityCardInfo.getNom() + "\n" + identityCardInfo.getPrenom() + "\n" + identityCardInfo.getNumCarte());
+            }
+        } finally {
             textRecognizer.release();
         }
     }
@@ -203,15 +205,54 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    protected String parseIDCElement (String stringIDC) {
+    protected void parseIDCElement(String stringIDC) {
 
-        String allText = stringIDC;
-        String newString = "";
+        String allText = stringIDC;//variable qui accueil le text brute
+        String[] allTextTab = null;//tableau allant prendre la chaine découpée
+        //infos de la carte
+        String nom = "";
+        String prenom = "";
+        String numCarte = "";
 
-        newString = allText.substring(allText.indexOf("Carte"), allText.indexOf("Nationalité"));
-        newString += allText.substring(allText.indexOf("Nom", allText.indexOf("Prénom")));
-        newString += allText.substring(allText.indexOf("Prénom"), allText.indexOf("Sexe"));
+        //On renplace tout les \n par des ; pour moins de problèmes
+        allText = allText.replace('\n', ';');
 
-        return newString;
+        //Puis on split la chaine
+        allTextTab = allText.split(";");
+        int tabLength = allTextTab.length;
+
+        try {
+            //On rentre les infos
+            for (int i = 0; i < allTextTab.length; i++) {
+                System.out.println(allTextTab[i]);
+                if (allTextTab[i].contains("Nom")) {
+                    nom = allTextTab[i];
+                    //nom = nom.substring(8, nom.length());
+                }
+                if (allTextTab[i].contains("CARTE") /*|| (isNumber(allTextTab[i]) && allTextTab[i].length() == 22)*/) {
+                    numCarte = allTextTab[i];
+                }
+                if (allTextTab[i].contains("Prenom")) {
+                    prenom = allTextTab[i];
+                    //prenom = prenom.substring(9, prenom.length());
+                }
+            }
+        } catch (Exception e) {
+        }
+
+        //On rempli la classe avec les données
+        identityCardInfo.setNom(nom);
+        identityCardInfo.setPrenom(prenom);
+        identityCardInfo.setNumCarte(numCarte);
+    }
+
+    private boolean isNumber(String chaine) {
+        boolean isNumber = true;
+        for (int i = 0; i <= chaine.length(); i++) {
+            if (!(chaine.charAt(i) >= '0' && chaine.charAt(i) <= '9')) {
+                isNumber = false;
+            }
+        }
+        return isNumber;
     }
 }
